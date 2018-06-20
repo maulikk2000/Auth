@@ -6,11 +6,19 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.DependencyInjection;
 using AspNetCore.Auth.Web.Services;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication.Facebook;
 
 namespace AspNetCore.Auth.Web
 {
     public class Startup
     {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc(options => {
@@ -24,14 +32,21 @@ namespace AspNetCore.Auth.Web
             {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                //options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = FacebookDefaults.AuthenticationScheme;
             })
-                .AddCookie(options =>
-                {
+            //.AddCookie(options =>
+            //{
                     
-                    options.LoginPath = "/auth/signin";
+            //    options.LoginPath = "/auth/signin";
 
-                });
+            //})
+            .AddFacebook(options =>
+            {
+                options.AppId = Configuration.GetValue<string>("facebook:AppId");
+                options.AppSecret = Configuration.GetValue<string>("facebook:AppSecret"); ;
+            })
+            .AddCookie();
         }
         
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

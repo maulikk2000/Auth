@@ -23,7 +23,9 @@ namespace AspNetCore.Auth.Web.Controllers
         [Route("signin")]
         public IActionResult SignIn()
         {
-            return View(new SignInModel());
+            //return View(new SignInModel()); this is for our own login
+
+            return Challenge(new AuthenticationProperties { RedirectUri = "/" });
         }
 
         [Route("signin")]
@@ -34,10 +36,10 @@ namespace AspNetCore.Auth.Web.Controllers
             if (ModelState.IsValid)
             {
                 User user;
-                if(await _userService.ValidateCredentials(model.Username, model.Password, out user))
+                if (await _userService.ValidateCredentials(model.Username, model.Password, out user))
                 {
                     await SignInUser(user.Username);
-                    if(returnUrl != null)
+                    if (returnUrl != null)
                     {
                         return Redirect(returnUrl);
                     }
@@ -60,7 +62,7 @@ namespace AspNetCore.Auth.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                if(await _userService.AddUser(model.Username, model.Password))
+                if (await _userService.AddUser(model.Username, model.Password))
                 {
                     await SignInUser(model.Username);
                     return RedirectToAction("Index", "Home");
@@ -86,7 +88,7 @@ namespace AspNetCore.Auth.Web.Controllers
                 new Claim("name",username)
             };
 
-            var identity = new ClaimsIdentity(claims,CookieAuthenticationDefaults.AuthenticationScheme,"name",null);
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme, "name", null);
             var principal = new ClaimsPrincipal(identity);
             await HttpContext.SignInAsync(principal);
         }
