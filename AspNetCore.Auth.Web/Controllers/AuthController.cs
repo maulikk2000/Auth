@@ -53,6 +53,23 @@ namespace AspNetCore.Auth.Web.Controllers
             return View(new SignUpModel());
         }
 
+        [Route("signup")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SignUp(SignUpModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                if(await _userService.AddUser(model.Username, model.Password))
+                {
+                    await SignInUser(model.Username);
+                    return RedirectToAction("Index", "Home");
+                }
+                ModelState.AddModelError("Error", "User name cannot be added.. already in use..");
+            }
+            return View(model); //if some issue with modelstate, pass back to the SignUp page.
+        }
+
         [Route("signout")]
         [HttpPost]
         public async Task<IActionResult> SignOut()
@@ -66,8 +83,7 @@ namespace AspNetCore.Auth.Web.Controllers
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier,username),
-                new Claim("UserName",username),
-                new Claim(ClaimTypes.SerialNumber,username)
+                new Claim("name",username)
             };
 
             var identity = new ClaimsIdentity(claims,CookieAuthenticationDefaults.AuthenticationScheme,"name",null);
