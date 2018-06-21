@@ -25,7 +25,15 @@ namespace AspNetCore.Auth.Web.Controllers
         {
             //return View(new SignInModel()); this is for our own login
 
-            return Challenge(new AuthenticationProperties { RedirectUri = "/" });
+            //return Challenge(new AuthenticationProperties { RedirectUri = "/" }); //this is when we use just facebook like third party authentication mechanism
+            return View();
+        }
+
+        [Route("signin/{provider}")]
+        public IActionResult SignIn(string provider, string returnUrl = null)
+        {
+            //return Challenge(new AuthenticationProperties { RedirectUri = "/" }, provider);
+            return Challenge(new AuthenticationProperties { RedirectUri = returnUrl ?? "/" }, provider);
         }
 
         [Route("signin")]

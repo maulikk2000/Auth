@@ -1,4 +1,4 @@
-﻿@model AspNetCore.Auth.Web.Models.SignInModel
+﻿@*@model AspNetCore.Auth.Web.Models.SignInModel
 
 @if (!ViewContext.ModelState.IsValid)
 {
@@ -15,4 +15,15 @@
     <input type="password" class="form-control" placeholder="Password"
            asp-for="Password" />
     <button class="btn btn-lg btn-primary btn-block">Sign In</button>
-</form>
+</form>*@
+
+
+@inject  Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider schemeProvider
+
+@foreach(var provider in await schemeProvider.GetRequestHandlerSchemesAsync())
+{
+    <a class="btn btn-primary login-button" asp-action="SignIn"
+       asp-route-provider="@provider.Name"
+       asp-route-returnUrl="@Context.Request.Query["returnUrl"]">@provider.DisplayName</a>
+
+}
