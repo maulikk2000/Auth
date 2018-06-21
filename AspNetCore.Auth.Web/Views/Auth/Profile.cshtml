@@ -1,0 +1,17 @@
+﻿@model AspNetCore.Auth.Web.Models.ProfileModel
+
+@if (!ViewContext.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="form-validation"></div>
+}
+
+<form class="form-profile"
+      asp-action="Profile"
+      asp-route-returnUrl="@Context.Request.Query["returnUrl"]">
+    <h2>Please add the following info</h2>
+    <label class="sr-only">Display Name</label>
+    <input type="text" class="form-control" placeholder="Display Name" asp-for="DisplayName" />
+    <label class="sr-only">E-mail</label>
+    <input type="text" class="form-control" placeholder="E-mail" asp-for="Email" />
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
+</form>

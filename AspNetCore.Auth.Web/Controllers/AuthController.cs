@@ -127,6 +127,43 @@ namespace AspNetCore.Auth.Web.Controllers
             {
                 return await SignInUser(user, returnUrl);
             }
+
+            //If none of hte above works,they need to provide the required info. so lets get that now
+            var model = new ProfileModel
+            {
+                DisplayName = authResult.Principal.Identity.Name
+            };
+            var emailClaim = authResult.Principal.FindFirst(ClaimTypes.Email);
+            if(emailClaim != null)
+            {
+                model.Email = emailClaim.Value;
+            }
+
+            return View(model);
+        }
+
+        [Route("signin/profile")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile(ProfileModel model, string returnUrl = null)
+        {
+            var authResult = await HttpContext.AuthenticateAsync("Temporary");
+            //if user not temporarily signedin, redirect to signin page
+            if (!authResult.Succeeded)
+            {
+                return RedirectToAction("SignIn");
+            }
+            //if model state is valie
+            if (ModelState.IsValid)
+            {
+                //code bit optimistic. Its not checking whether user with the same details already exist or not etc...
+                var user = await _registerUserService.AddUser(authResult.Principal.FindFirst(ClaimTypes.NameIdentifier).Value, model.DisplayName, model.Email);
+                return await SignInUser(user, returnUrl);
+            }
+
+            //if model state not valid then send user to model
+            return View(model);
+
         }
 
         private async Task<IActionResult> SignInUser(RegisterUser user, string returnUrl = null)
