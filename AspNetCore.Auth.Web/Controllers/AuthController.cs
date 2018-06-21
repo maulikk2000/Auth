@@ -15,10 +15,12 @@ namespace AspNetCore.Auth.Web.Controllers
     public class AuthController : Controller
     {
         private readonly IUserService _userService;
+        private readonly IRegisterUserService _registerUserService;
 
-        public AuthController(IUserService userService)
+        public AuthController(IUserService userService, IRegisterUserService registerUserService)
         {
             _userService = userService;
+            _registerUserService = registerUserService;
         }
         [Route("signin")]
         public IActionResult SignIn()
@@ -33,7 +35,15 @@ namespace AspNetCore.Auth.Web.Controllers
         public IActionResult SignIn(string provider, string returnUrl = null)
         {
             //return Challenge(new AuthenticationProperties { RedirectUri = "/" }, provider);
-            return Challenge(new AuthenticationProperties { RedirectUri = returnUrl ?? "/" }, provider);
+
+            //return Challenge(new AuthenticationProperties { RedirectUri = returnUrl ?? "/" }, provider);
+
+            var redirectUri = Url.Action("Profile");
+            if(returnUrl != null)
+            {
+                redirectUri += "?returnUrl" + returnUrl;
+            }
+            return Challenge(new AuthenticationProperties { RedirectUri = redirectUri }, provider);
         }
 
         [Route("signin")]
@@ -99,6 +109,42 @@ namespace AspNetCore.Auth.Web.Controllers
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme, "name", null);
             var principal = new ClaimsPrincipal(identity);
             await HttpContext.SignInAsync(principal);
+        }
+
+        [Route("signin/profile")]
+        public async Task<IActionResult> Profile(string returnUrl = null)
+        {
+            var authResult = await HttpContext.AuthenticateAsync("Temporary");
+
+            if (!authResult.Succeeded)
+            {
+                return RedirectToAction("SignIn");
+            }
+
+            //here we use the name identifier of the temporarily signed-in user which resides in principal in auth result
+            var user = await _registerUserService.GetUserById(authResult.Principal.FindFirst(ClaimTypes.NameIdentifier).Value);
+            if(user != null)
+            {
+                return await SignInUser(user, returnUrl);
+            }
+        }
+
+        private async Task<IActionResult> SignInUser(RegisterUser user, string returnUrl = null)
+        {
+            //first signout user from temp session
+            await HttpContext.SignOutAsync("Temporary");
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.DisplayName),
+                new Claim(ClaimTypes.Email, user.Email)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            return Redirect(returnUrl == null ? "/" : returnUrl);
         }
 
 

@@ -29,11 +29,15 @@ namespace AspNetCore.Auth.Web
 
             var users = new Dictionary<string, string> { {"Maulik","khandwala" } };
             services.AddSingleton<IUserService>(new DummyUserService(users));
+            services.AddSingleton<IRegisterUserService, DummyRegisterUserService>();
 
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+
+                //sign in users using the temporary scheme by default 
+                //options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = "Temporary";
                 options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 //options.DefaultChallengeScheme = FacebookDefaults.AuthenticationScheme;
             })
@@ -67,10 +71,8 @@ namespace AspNetCore.Auth.Web
 
                 options.ConsumerKey = twitter.ConsumerKey;
                 options.ConsumerSecret = twitter.ConsumerSecret;
-
-
-            });
-            //.AddCookie();
+            })
+            .AddCookie("Temporary"); //add temporary cookie
         }
         
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
